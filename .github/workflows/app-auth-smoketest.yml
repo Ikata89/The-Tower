@@ -1,0 +1,45 @@
+name: GitHub App smoke test
+on:
+  workflow_dispatch: {}   # run manually
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          installation-id: ${{ secrets.INSTALLATION_ID }}
+
+      - name: Open test issue
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          curl -sS -X POST \
+            -H "Authorization: Bearer ${APP_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${REPO}/issues \
+            -d '{"title":"App auth OK ✅","body":"Opened with the GitHub App installation token."}'
+
+      - name: Commit a test file
+        env:
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          echo "Hello from the App at $(date -u +%FT%TZ)" > .app-auth-ok.txt
+          git config user.name "the-tower-agent[bot]"
+          git config user.email "the-tower-agent[bot]@users.noreply.github.com"
+          git add .app-auth-ok.txt
+          git commit -m "test: commit via GitHub App token" || exit 0
+          git push https://${APP_TOKEN}@github.com/${REPO}.git HEAD:${BRANCH}
