@@ -1,57 +1,60 @@
-#!/usr/bin/env python3
-import argparse, json, os, sys, gzip
+import argparse
+import json
+import os
 
-def sniff_and_load(raw: bytes):
-    # 1) Try plain JSON
-    try:
-        return json.loads(raw.decode("utf-8")), "json"
-    except Exception:
-        pass
-    # 2) Try gzipped JSON
-    try:
-        decomp = gzip.decompress(raw)
-        return json.loads(decomp.decode("utf-8")), "gzip_json"
-    except Exception:
-        pass
-    # 3) Fallback: expose hex length only (placeholder)
-    return {"_note": "unrecognised format", "bytes": len(raw)}, "unknown"
+def read_file(path):
+    with open(path, "rb") as f:
+        return f.read()
+
+def trace_file(data):
+    records = []
+    # naive segmentation: 4-byte length prefix detection (staged)
+    i = 0
+    index = 0
+    while i < len(data):
+        # try to read a 4-byte length
+        if i + 4 <= len(data):
+            length = int.from_bytes(data[i:i+4], "little", signed=False)
+            if 0 < length < len(data) - i:
+                chunk = data[i+4:i+4+length]
+                records.append({
+                    "index": index,
+                    "offset": i,
+                    "length": length,
+                    "type": "binary_chunk",
+                    "preview_hex": chunk[:32].hex(" "),
+                    "parsed": None
+                })
+                i += 4 + length
+                index += 1
+                continue
+        # fallback: raw byte
+        records.append({
+            "index": index,
+            "offset": i,
+            "length": 1,
+            "type": "raw_byte",
+            "preview_hex": data[i:i+1].hex(" "),
+            "parsed": None
+        })
+        i += 1
+        index += 1
+    return records
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("input", help="Path to playerInfo.dat")
-    ap.add_argument("--out", default="out", help="Output folder")
-    args = ap.parse_args()
+    parser = argparse.ArgumentParser(description="Parse or trace playerInfo.dat")
+    parser.add_argument("file", help="Path to playerInfo.dat")
+    parser.add_argument("--trace", action="store_true", help="Output record trace instead of parsing")
+    args = parser.parse_args()
 
-    os.makedirs(args.out, exist_ok=True)
-    with open(args.input, "rb") as f:
-        raw = f.read()
+    data = read_file(args.file)
 
-    data, method = sniff_and_load(raw)
-
-    # Emit JSON
-    with open(os.path.join(args.out, "playerInfo.json"), "w", encoding="utf-8") as f:
-        json.dump({"_method": method, "data": data}, f, ensure_ascii=False, indent=2)
-
-    # Emit CSV (very basic key/value flatten)
-    try:
-        import csv
-        flat = []
-        def walk(prefix, obj):
-            if isinstance(obj, dict):
-                for k,v in obj.items():
-                    walk(f"{prefix}.{k}" if prefix else k, v)
-            elif isinstance(obj, list):
-                for i,v in enumerate(obj):
-                    walk(f"{prefix}[{i}]", v)
-            else:
-                flat.append((prefix, obj))
-        walk("", data)
-        with open(os.path.join(args.out, "playerInfo.csv"), "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f); w.writerow(["key","value"]); w.writerows(flat)
-    except Exception:
-        pass
-
-    print(f"Parsed with method: {method}. Outputs in {args.out}")
+    if args.trace:
+        trace = trace_file(data)
+        print(json.dumps({"records": trace}, indent=2))
+    else:
+        # staged parser: diagnostic mode
+        print(json.dumps({"status": "diagnostic only, use --trace for record trace"}, indent=2))
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
