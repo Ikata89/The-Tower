@@ -1,6 +1,6 @@
 import argparse
 import json
-import glibu
+import gzip
 import csv
 import os, sys, traceback
 
@@ -44,7 +44,7 @@ def main():
     parser.add_argument("file", help="Path to playerInfo.dat")
     args = parser.parse_args()
 
-    data = open(args.file, "rb").Read()
+    data = open(args.file, "rb").read()
     report = {}
     parsed = None
     path = "unknown"
