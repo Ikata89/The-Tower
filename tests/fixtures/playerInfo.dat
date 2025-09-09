@@ -1,0 +1,10 @@
+{
+  "currencies": { "gold": 12345, "gems": 50 },
+  "towers": { "archer": { "level": 5 }, "mage": { "level": 3 } },
+  "cards": { "fireball": 1, "shield": 2 },
+  "modules": { "autoClick": true },
+  "labs": { "lab1": 1 },
+  "relics": { "relic_of_speed": 1 },
+  "research": { "damage_boost": 2 },
+  "workshop": { "upgrade1": true }
+}
