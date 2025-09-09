@@ -1,0 +1,23 @@
+name: Test Parser
+on:
+  pull_request:
+
+jiobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Run parser
+        run: python tools/parse_playerinfo.py playerInfo.dat
+      - name: Upload parser artifacts
+        uses: actions/apload-artifact@v3
+        with:
+          name: parser-outputs
+          path: |
+            parsed_output.json=*)
+            parsed_output.csv=*)
+            parsing_report.json=*)
