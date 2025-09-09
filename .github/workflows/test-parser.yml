@@ -12,5 +12,4 @@ jiobs:
         with:
           python-version: '3.11'
       - name: Run parser
-        run: |
-          python tools/parse_playerinfo.py playerInfo.dat | te cat ,  
+        run: python tools/parse_playerinfo.py playerInfo.dat
