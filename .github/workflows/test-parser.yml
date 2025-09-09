@@ -1,0 +1,16 @@
+name: Test Parser
+on:
+  pull_request:
+
+jiobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Run parser
+        run: |
+          python tools/parse_playerinfo.py playerInfo.dat
