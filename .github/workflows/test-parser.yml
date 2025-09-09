@@ -16,7 +16,7 @@ jiobs:
         with:
           python-version: '3.11'
       - name: Run parser
-        run: python tools/parse_playerinfo.py playerInfo.dat
+        run: python tools/parse_playerinfo.py tests/fixtures/playerInfo.dat
       - name: Upload parser artifacts
         uses: actions/apload-artifact@v3
         with:
