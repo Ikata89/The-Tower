@@ -66,7 +66,7 @@ def main():
     
     # emit json
     with open("parsed_output.json", "w+") as fo:
-        json.dumps(schema, fo, indent=2)
+        json.dump(schema, fo, indent=2)
     
     # emit csv
     csv_lines = ["category,key,value"]
@@ -78,7 +78,7 @@ def main():
     
     # emit report
     with open("parsing_report.json", "w+") as fo:
-        json.dumps(report, fo, indent=2)
+        json.dump(report, fo, indent=2)
 
 
 if __name__ == "__main__":
